@@ -4,20 +4,7 @@ import async_timeout
 from datetime import timedelta
 from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpdateCoordinator
 from homeassistant.components.sensor import SensorEntity
-
-# Define your custom constants here if CONF_VIN is not available
-CONF_NAME = "name"
-CONF_VIN = "vin"
-
-from .const import DOMAIN
-
-async def async_setup_entry(hass, entry, async_add_entities):
-    """Set up STK czechr sensors from a config entry."""
-    name = entry.data[CONF_NAME]
-    vin = entry.data[CONF_VIN]
-    coordinator = STKczechrDataUpdateCoordinator(hass, name, vin)
-    await coordinator.async_refresh()  # Initial data fetch
-    async_add_entities([STKczechrSensor(coordinator)], True)
+from .const import DOMAIN, CONF_NAME, CONF_VIN
 
 class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the API."""
@@ -77,3 +64,11 @@ class STKczechrSensor(SensorEntity):
     async def async_update(self):
         """Fetch new state data for the sensor."""
         await self._coordinator.async_request_refresh()
+
+async def async_setup_entry(hass, entry, async_add_entities):
+    """Set up STK czechr sensors from a config entry."""
+    name = entry.data[CONF_NAME]
+    vin = entry.data[CONF_VIN]
+    coordinator = STKczechrDataUpdateCoordinator(hass, name, vin)
+    await coordinator.async_refresh()  # Initial data fetch
+    async_add_entities([STKczechrSensor(coordinator)], True)
