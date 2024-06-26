@@ -65,10 +65,20 @@ class STKczechrSensor(SensorEntity):
         """Fetch new state data for the sensor."""
         await self._coordinator.async_request_refresh()
 
-async def async_setup_entry(hass, entry, async_add_entities):
+async def async_setup_entry(hass, entry):
     """Set up STK czechr sensors from a config entry."""
     name = entry.data[CONF_NAME]
     vin = entry.data[CONF_VIN]
+
+    # Define coordinator
     coordinator = STKczechrDataUpdateCoordinator(hass, name, vin)
-    await coordinator.async_refresh()  # Initial data fetch
-    async_add_entities([STKczechrSensor(coordinator)], True)
+
+    # Perform the initial data fetch
+    await coordinator.async_refresh()
+
+    # Create a sensor entity
+    async_add_entities([STKczechrSensor(coordinator)])
+
+    # Return True to indicate successful setup
+    return True
+
