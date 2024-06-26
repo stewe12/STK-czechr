@@ -79,19 +79,20 @@ async def async_setup_entry(hass, entry, platform):
     # Perform the initial data fetch
     await coordinator.async_refresh()
 
-    # Define the update callback
-    async def async_update_callback():
-        await coordinator.async_refresh()
-
-    # Register the update callback
-    entry.async_on_unload(
-        hass.config_entries.async_forward_entry_unload(entry, "sensor")
-    )
-
     # Define the sensor entity
+    sensor = STKczechrSensor(coordinator)
+
+    # Add the sensor entity to Home Assistant
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(entry, "sensor")
     )
+
+    # Define the unload callback
+    async def async_unload_entry():
+        await hass.config_entries.async_forward_entry_unload(entry, "sensor")
+
+    # Register the unload callback
+    entry.async_on_unload(async_unload_entry)
 
     # Return True to indicate successful setup
     return True
