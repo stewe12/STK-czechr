@@ -5,6 +5,9 @@ from datetime import timedelta
 from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpdateCoordinator
 from homeassistant.components.sensor import SensorEntity
 from .const import DOMAIN, CONF_NAME, CONF_VIN
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the API."""
@@ -17,7 +20,7 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
         self._attributes = {}
         super().__init__(
             hass,
-            asyncio.get_event_loop(),
+            _LOGGER,  # Use the logger instance instead of the event loop
             name=f"{name} Data",
             update_interval=timedelta(days=1),  # Update daily
         )
@@ -92,4 +95,3 @@ async def async_setup_entry(hass, entry, platform):
 
     # Return True to indicate successful setup
     return True
-
