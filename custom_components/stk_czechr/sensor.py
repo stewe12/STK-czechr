@@ -2,8 +2,8 @@ import asyncio
 import aiohttp
 import async_timeout
 from datetime import timedelta
-from homeassistant.components.sensor import SensorEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpdateCoordinator
+from homeassistant.components.sensor import SensorEntity
 
 # Define your custom constants here if CONF_VIN is not available
 CONF_NAME = "name"
@@ -16,6 +16,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     name = entry.data[CONF_NAME]
     vin = entry.data[CONF_VIN]
     coordinator = STKczechrDataUpdateCoordinator(hass, name, vin)
+    await coordinator.async_refresh()  # Initial data fetch
     async_add_entities([STKczechrSensor(coordinator)], True)
 
 class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
