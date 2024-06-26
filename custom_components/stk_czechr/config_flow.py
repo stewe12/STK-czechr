@@ -2,6 +2,14 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from .const import DOMAIN, CONF_NAME, CONF_VIN
+import logging
+
+_LOGGER = logging.getLogger(__name__)
+
+@callback
+def configured_cars(hass):
+    """Return a set of configured VINs."""
+    return set(entry.data[CONF_VIN] for entry in hass.config_entries.async_entries(DOMAIN))
 
 class STKczechrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for STK czechr."""
@@ -9,20 +17,19 @@ class STKczechrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
+    def __init__(self):
+        self.logger = _LOGGER  # Assign the logger in the constructor
+
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
         errors = {}
         if user_input is not None:
             self.logger.debug("User input received: %s", user_input)
-            try:
-                if user_input[CONF_VIN] in self.configured_vins:
-                    errors["base"] = "vin_exists"
-                else:
-                    self.logger.debug("Creating entry with data: %s", user_input)
-                    return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
-            except Exception as e:
-                self.logger.error("Error creating entry: %s", str(e))
-                errors["base"] = "unknown_error"
+            if user_input[CONF_VIN] in configured_cars(self.hass):
+                errors["base"] = "vin_exists"
+            else:
+                self.logger.debug("Creating entry with data: %s", user_input)
+                return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
 
         data_schema = vol.Schema(
             {
@@ -31,8 +38,3 @@ class STKczechrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }
         )
         return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
-
-    @property
-    def configured_vins(self):
-        """Return a set of configured VINs."""
-        return {entry.data[CONF_VIN] for entry in self._async_current_entries()}
