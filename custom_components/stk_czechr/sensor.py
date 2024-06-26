@@ -1,9 +1,8 @@
 import aiohttp
 import async_timeout
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import CONF_NAME, CONF_VIN
-
-from .const import DOMAIN
+from homeassistant.const import CONF_NAME
+from .const import DOMAIN, CONF_VIN  # Import CONF_VIN from your const module
 
 async def async_setup_entry(hass, entry, async_add_entities):
     """Set up STK czechr sensors from a config entry."""
