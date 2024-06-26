@@ -44,12 +44,8 @@ class STKczechrSensor(SensorEntity):
                 with async_timeout.timeout(10):
                     response = await session.get(url)
                     data = await response.json()
-                    self._state = data.get("status")
-                    self._attributes = {
-                        "last_checked": data.get("last_checked"),
-                        "expiry_date": data.get("expiry_date"),
-                        "comments": data.get("comments"),
-                    }
+                    self._state = data[0]["value"]  # Assuming the first element represents the state
+                    self._attributes = {item["label"]: item["value"] for item in data}
         except Exception as e:
             self._state = None
             self._attributes = {}
