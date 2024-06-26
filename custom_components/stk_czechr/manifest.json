@@ -2,8 +2,8 @@
   "domain": "stk_czechr",
   "name": "STK czechr",
   "version": "1.0",
-  "documentation": "https://github.com/stewe12/STK-czechr",
+  "documentation": "https://github.com/your-repo",
   "dependencies": [],
   "codeowners": ["@your-github-username"],
-  "requirements": ["aiohttp", "async_timeout"]
+  "requirements": ["aiohttp==3.7.4"]
 }
