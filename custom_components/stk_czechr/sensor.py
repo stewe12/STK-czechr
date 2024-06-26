@@ -65,7 +65,7 @@ class STKczechrSensor(SensorEntity):
         """Fetch new state data for the sensor."""
         await self._coordinator.async_request_refresh()
 
-async def async_setup_entry(hass, entry, async_add_entities):
+async def async_setup_entry(hass, entry):
     """Set up STK czechr sensors from a config entry."""
     name = entry.data[CONF_NAME]
     vin = entry.data[CONF_VIN]
@@ -76,8 +76,20 @@ async def async_setup_entry(hass, entry, async_add_entities):
     # Perform the initial data fetch
     await coordinator.async_refresh()
 
-    # Create a sensor entity
-    async_add_entities([STKczechrSensor(coordinator)])
+    # Define the update callback
+    async def async_update_callback():
+        await coordinator.async_refresh()
+
+    # Register the update callback
+    entry.async_on_unload(
+        hass.config_entries.async_forward_entry_unload(entry, "sensor")
+    )
+
+    # Define the sensor entity
+    hass.async_create_task(
+        hass.config_entries.async_forward_entry_setup(entry, "sensor")
+    )
 
     # Return True to indicate successful setup
     return True
+
