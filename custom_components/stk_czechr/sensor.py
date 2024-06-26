@@ -65,7 +65,7 @@ class STKczechrSensor(SensorEntity):
         """Fetch new state data for the sensor."""
         await self._coordinator.async_request_refresh()
 
-async def async_setup_entry(hass, entry):
+async def async_setup_entry(hass, entry, platform):
     """Set up STK czechr sensors from a config entry."""
     name = entry.data[CONF_NAME]
     vin = entry.data[CONF_VIN]
