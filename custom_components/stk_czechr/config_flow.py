@@ -1,15 +1,7 @@
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.helpers.entity import logger as entity_logger
 from .const import DOMAIN, CONF_NAME, CONF_VIN
-
-_LOGGER = entity_logger
-
-@callback
-def configured_cars(hass):
-    """Return a set of configured VINs."""
-    return set(entry.data[CONF_VIN] for entry in hass.config_entries.async_entries(DOMAIN))
 
 class STKczechrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for STK czechr."""
@@ -21,11 +13,11 @@ class STKczechrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the initial step."""
         errors = {}
         if user_input is not None:
-            _LOGGER.debug("User input received: %s", user_input)
-            if user_input[CONF_VIN] in configured_cars(self.hass):
+            self.logger.debug("User input received: %s", user_input)
+            if user_input[CONF_VIN] in self.configured_vins:
                 errors["base"] = "vin_exists"
             else:
-                _LOGGER.debug("Creating entry with data: %s", user_input)
+                self.logger.debug("Creating entry with data: %s", user_input)
                 return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
 
         data_schema = vol.Schema(
@@ -35,3 +27,8 @@ class STKczechrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }
         )
         return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
+
+    @property
+    def configured_vins(self):
+        """Return a set of configured VINs."""
+        return {entry.data[CONF_VIN] for entry in self._async_current_entries()}
