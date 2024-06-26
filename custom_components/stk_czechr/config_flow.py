@@ -30,8 +30,8 @@ class STKczechrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         data_schema = vol.Schema(
             {
-                vol.Required(CONF_NAME): str,
-                vol.Required(CONF_VIN): str,
+                vol.Required("name", description={"suggested_value": "Jméno vozidla"}): str,
+                vol.Required("vin", description={"suggested_value": "VIN"}): str,
             }
         )
         return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
