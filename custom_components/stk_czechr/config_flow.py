@@ -1,6 +1,7 @@
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
+from homeassistant.helpers import config_validation as cv
 from .const import DOMAIN
 
 @callback
@@ -12,6 +13,7 @@ class STKczechrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for STK czechr."""
 
     VERSION = 1
+    CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
