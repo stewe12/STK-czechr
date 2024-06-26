@@ -3,8 +3,11 @@ import aiohttp
 import async_timeout
 from datetime import timedelta
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import CONF_NAME, CONF_VIN
 from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpdateCoordinator
+
+# Define your custom constants here if CONF_VIN is not available
+CONF_NAME = "name"
+CONF_VIN = "vin"
 
 from .const import DOMAIN
 
