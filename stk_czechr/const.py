@@ -1,1 +1,0 @@
-DOMAIN = "stk_czechr"

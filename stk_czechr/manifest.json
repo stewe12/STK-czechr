@@ -1,9 +1,0 @@
-{
-  "domain": "stk_czechr",
-  "name": "STK czechr",
-  "version": "1.0",
-  "documentation": "https://github.com/your-repo",
-  "dependencies": [],
-  "codeowners": ["@your-github-username"],
-  "requirements": []
-}
