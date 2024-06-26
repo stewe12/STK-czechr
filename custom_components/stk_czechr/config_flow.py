@@ -14,11 +14,15 @@ class STKczechrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             self.logger.debug("User input received: %s", user_input)
-            if user_input[CONF_VIN] in self.configured_vins:
-                errors["base"] = "vin_exists"
-            else:
-                self.logger.debug("Creating entry with data: %s", user_input)
-                return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
+            try:
+                if user_input[CONF_VIN] in self.configured_vins:
+                    errors["base"] = "vin_exists"
+                else:
+                    self.logger.debug("Creating entry with data: %s", user_input)
+                    return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
+            except Exception as e:
+                self.logger.error("Error creating entry: %s", str(e))
+                errors["base"] = "unknown_error"
 
         data_schema = vol.Schema(
             {
