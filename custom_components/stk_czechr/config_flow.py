@@ -1,10 +1,10 @@
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
+from homeassistant.helpers.entity import logger as entity_logger
 from .const import DOMAIN, CONF_NAME, CONF_VIN
-import logging
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = entity_logger
 
 @callback
 def configured_cars(hass):
