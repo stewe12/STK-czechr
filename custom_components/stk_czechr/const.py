@@ -1,1 +1,1 @@
-
+DOMAIN = "stk_czechr"
