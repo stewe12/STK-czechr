@@ -7,6 +7,8 @@ import logging
 
 _LOGGER = logging.getLogger(__name__)
 
+ICON = "/local/stk_czechr/stk.png"
+
 PLATFORMS = [PLATFORM_SENSOR]
 
 async def async_setup(hass: HomeAssistant, config: dict):
