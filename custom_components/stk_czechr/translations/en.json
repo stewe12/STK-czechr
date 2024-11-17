@@ -1,0 +1,16 @@
+{
+  "title": "STK czechr",
+  "step": {
+    "user": {
+      "title": "Configure your vehicle",
+      "description": "Enter the vehicle name and VIN to track its inspection data.",
+      "data": {
+        "name": "Vehicle name",
+        "vin": "Vehicle VIN"
+      }
+    }
+  },
+  "error": {
+    "vin_exists": "A vehicle with this VIN already exists."
+  }
+}
