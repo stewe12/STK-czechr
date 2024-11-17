@@ -1,3 +1,4 @@
+"""STK Czechr sensor platform."""
 from datetime import datetime, timedelta
 import logging
 import asyncio
@@ -16,6 +17,8 @@ from .const import (
     DEFAULT_UPDATE_INTERVAL,
     ERROR_API_TIMEOUT,
     STKStatus,
+    CONF_NAME,
+    CONF_VIN,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -58,7 +61,6 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
     def _process_api_data(self, data):
         """Process the API response data."""
         try:
-            # Extract relevant data from API response
             processed_data = {
                 "last_check_date": data.get("lastCheckDate"),
                 "valid_until": data.get("validUntil"),
