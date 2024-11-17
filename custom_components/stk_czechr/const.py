@@ -2,15 +2,15 @@
 DOMAIN = "stk_czechr"
 
 # Config keys
-CONF_NAME = "Jméno vozidla"
-CONF_VIN = "VIN"
+CONF_NAME = "name"
+CONF_VIN = "vin"
 
 # Platform names
 PLATFORM_SENSOR = "sensor"
 
 # Error messages
-ERROR_INVALID_VIN = "Zadané neplatné VIN"
-ERROR_VIN_EXISTS = "VIN je již používané"
+ERROR_INVALID_VIN = "Invalid VIN provided"
+ERROR_VIN_EXISTS = "This VIN is already configured"
 ERROR_API_TIMEOUT = "API request timed out"
 ERROR_API_CONNECTION = "Could not connect to API"
 
