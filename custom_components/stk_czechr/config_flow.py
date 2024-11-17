@@ -1,8 +1,8 @@
+"""Config flow for STK czechr integration."""
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.helpers import selector
-from .const import DOMAIN, CONF_NAME, CONF_VIN, SENSOR_TYPES, ERROR_INVALID_VIN, ERROR_VIN_EXISTS
+from .const import DOMAIN, CONF_NAME, CONF_VIN, ERROR_INVALID_VIN, ERROR_VIN_EXISTS
 
 class STKczechrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for STK czechr."""
@@ -23,37 +23,16 @@ class STKczechrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             elif not self._validate_vin(user_input[CONF_VIN]):
                 errors["base"] = ERROR_INVALID_VIN
             else:
-                return await self.async_step_select_sensors(user_input)
+                return self.async_create_entry(
+                    title=user_input[CONF_NAME],
+                    data=user_input
+                )
 
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({
                 vol.Required(CONF_NAME): str,
                 vol.Required(CONF_VIN): str,
-            }),
-            errors=errors,
-        )
-
-    async def async_step_select_sensors(self, user_input):
-        """Step to select which sensors the user wants to enable."""
-        errors = {}
-
-        if user_input is not None:
-            # Save the selected sensors into options
-            return self.async_create_entry(
-                title=user_input[CONF_NAME],
-                data=user_input,
-                options={"enabled_sensors": user_input["enabled_sensors"]}
-            )
-
-        # Display available sensors to select from
-        return self.async_show_form(
-            step_id="select_sensors",
-            data_schema=vol.Schema({
-                vol.Optional("enabled_sensors", default=[]): selector.SelectSelector(
-                    options=[sensor_key for sensor_key, sensor in SENSOR_TYPES.items() if sensor["enabled_by_default"]],
-                    multiple=True
-                )
             }),
             errors=errors,
         )
