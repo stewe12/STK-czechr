@@ -1,4 +1,3 @@
-import asyncio
 import aiohttp
 import async_timeout
 from datetime import timedelta
@@ -13,14 +12,12 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the API."""
 
     def __init__(self, hass, name, vin):
-        self.hass = hass
+        """Initialize the data coordinator."""
         self.name = name
         self.vin = vin
-        self._state = None
-        self._attributes = {}
         super().__init__(
             hass,
-            _LOGGER,  # Use the logger instance instead of the event loop
+            _LOGGER,
             name=f"{name} Data",
             update_interval=timedelta(days=1),  # Update daily
         )
@@ -32,21 +29,25 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
             async with aiohttp.ClientSession() as session:
                 with async_timeout.timeout(10):
                     response = await session.get(url)
-                    data = await response.json()
-                    self._state = data[0]["value"]  # Assuming the first element represents the state
-                    self._attributes = {item["label"]: item["value"] for item in data}
+                    if response.status == 200:
+                        data = await response.json()
+                        state = data[0]["value"]  # Assuming the first element represents the state
+                        attributes = {item["label"]: item["value"] for item in data}
+                        return {"state": state, "attributes": attributes}
+                    else:
+                        _LOGGER.error("Error fetching data for VIN %s: HTTP %d", self.vin, response.status)
+                        return {"state": None, "attributes": {"error": f"HTTP {response.status}"}}
         except Exception as e:
-            self._state = None
-            self._attributes = {}
-            self._attributes["error"] = str(e)
-        
-        return self._state, self._attributes
+            _LOGGER.error("Exception while fetching data for VIN %s: %s", self.vin, e)
+            return {"state": None, "attributes": {"error": str(e)}}
 
-class STKczechrSensor(SensorEntity):
+
+class STKczechrSensor(CoordinatorEntity, SensorEntity):
     """Representation of a STK czechr sensor."""
 
     def __init__(self, coordinator):
         """Initialize the sensor."""
+        super().__init__(coordinator)
         self._coordinator = coordinator
 
     @property
@@ -57,42 +58,24 @@ class STKczechrSensor(SensorEntity):
     @property
     def state(self):
         """Return the state of the sensor."""
-        return self._coordinator.data[0] if self._coordinator.data else None
+        return self._coordinator.data.get("state") if self._coordinator.data else None
 
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        return self._coordinator.data[1] if self._coordinator.data else {}
+        return self._coordinator.data.get("attributes") if self._coordinator.data else {}
 
-    async def async_update(self):
-        """Fetch new state data for the sensor."""
-        await self._coordinator.async_request_refresh()
 
-async def async_setup_entry(hass, entry, platform):
+async def async_setup_entry(hass, entry, async_add_entities):
     """Set up STK czechr sensors from a config entry."""
     name = entry.data[CONF_NAME]
     vin = entry.data[CONF_VIN]
 
-    # Define coordinator
+    # Create coordinator
     coordinator = STKczechrDataUpdateCoordinator(hass, name, vin)
 
     # Perform the initial data fetch
     await coordinator.async_refresh()
 
-    # Define the sensor entity
-    sensor = STKczechrSensor(coordinator)
-
-    # Add the sensor entity to Home Assistant
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(entry, "sensor")
-    )
-
-    # Define the unload callback
-    async def async_unload_entry():
-        await hass.config_entries.async_forward_entry_unload(entry, "sensor")
-
-    # Register the unload callback
-    entry.async_on_unload(async_unload_entry)
-
-    # Return True to indicate successful setup
-    return True
+    # Create and add the sensor
+    async_add_entities([STKczechrSensor(coordinator)], update_before_add=True)
