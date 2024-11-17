@@ -5,6 +5,8 @@ from .const import DOMAIN, PLATFORM_SENSOR
 
 import logging
 
+ICON = "https://raw.githubusercontent.com/stewe12/STK-czechr/refs/heads/main/custom_components/stk_czechr/www/STK.png"
+
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [PLATFORM_SENSOR]
