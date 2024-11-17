@@ -1,6 +1,4 @@
-Complete Updated Files for STK Czechr Integration
-
-# 1. const.py - Replace entire file content
+# Custom component domain
 DOMAIN = "stk_czechr"
 
 # Config keys
