@@ -47,9 +47,6 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
                 )
                 if response.status == 200:
                     data = await response.json()
-                    # Handle both list and dict responses
-                    if isinstance(data, list) and data:
-                        data = data[0]  # Take first item if response is a list
                     return self._process_api_data(data)
                 else:
                     _LOGGER.error("API returned status %s", response.status)
@@ -64,17 +61,54 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
     def _process_api_data(self, data):
         """Process the API response data."""
         try:
-            if not isinstance(data, dict):
-                _LOGGER.error("Unexpected data format: %s", type(data))
+            if not isinstance(data, list):
+                _LOGGER.error("Expected list data format, got %s", type(data))
                 return {"error": "Invalid data format"}
 
-            processed_data = {
-                "last_check_date": data.get("lastCheckDate"),
-                "valid_until": data.get("validUntil"),
-                "days_remaining": self._calculate_days_remaining(data.get("validUntil")),
-                "status": self._determine_status(data.get("validUntil")),
-            }
+            # Convert list of dictionaries to a name:value mapping
+            data_dict = {}
+            for item in data:
+                if isinstance(item, dict) and "name" in item and "value" in item:
+                    data_dict[item["name"]] = item["value"]
+
+            _LOGGER.debug("Parsed data dict: %s", data_dict)
+
+            # Process all available sensor data
+            processed_data = {}
+            
+            # Process each sensor type
+            for sensor_key, sensor_config in SENSOR_TYPES.items():
+                api_field = sensor_config.get("api_field")
+                if not api_field:
+                    continue
+                
+                value = data_dict.get(api_field)
+                
+                # Handle special cases
+                if sensor_config.get("device_class") == "date" and value:
+                    try:
+                        date_obj = datetime.strptime(value, "%d.%m.%Y")
+                        value = date_obj.strftime("%Y-%m-%d")
+                    except ValueError as e:
+                        _LOGGER.error("Error parsing date '%s': %s", value, e)
+                        value = None
+                elif isinstance(value, (int, float)):
+                    # Keep numeric values as is
+                    pass
+                else:
+                    # Convert everything else to string
+                    value = str(value) if value is not None else None
+                
+                processed_data[sensor_key] = value
+
+            # Calculate days remaining and status for STK
+            valid_until = processed_data.get("valid_until")
+            processed_data["days_remaining"] = self._calculate_days_remaining(valid_until)
+            processed_data["status"] = self._determine_status(valid_until)
+            
+            _LOGGER.debug("Processed data: %s", processed_data)
             return processed_data
+
         except Exception as err:
             _LOGGER.error("Error processing API data: %s", err)
             return {"error": "Data processing error"}
