@@ -47,6 +47,9 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
                 )
                 if response.status == 200:
                     data = await response.json()
+                    # Handle both list and dict responses
+                    if isinstance(data, list) and data:
+                        data = data[0]  # Take first item if response is a list
                     return self._process_api_data(data)
                 else:
                     _LOGGER.error("API returned status %s", response.status)
@@ -61,6 +64,10 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
     def _process_api_data(self, data):
         """Process the API response data."""
         try:
+            if not isinstance(data, dict):
+                _LOGGER.error("Unexpected data format: %s", type(data))
+                return {"error": "Invalid data format"}
+
             processed_data = {
                 "last_check_date": data.get("lastCheckDate"),
                 "valid_until": data.get("validUntil"),
@@ -107,8 +114,10 @@ class STKczechrSensor(CoordinatorEntity, SensorEntity):
     def __init__(self, coordinator, sensor_type):
         """Initialize the sensor."""
         super().__init__(coordinator)
+        self.coordinator = coordinator  # Store coordinator reference
         self._sensor_type = sensor_type
         self._attr_name = f"{coordinator.name} {SENSOR_TYPES[sensor_type]['name']}"
+        self._attr_unique_id = f"{coordinator.vin}_{sensor_type}"  # Set unique_id directly
         self._attr_icon = SENSOR_TYPES[sensor_type]['icon']
         if "device_class" in SENSOR_TYPES[sensor_type]:
             self._attr_device_class = SENSOR_TYPES[sensor_type]['device_class']
@@ -116,16 +125,11 @@ class STKczechrSensor(CoordinatorEntity, SensorEntity):
             self._attr_unit_of_measurement = SENSOR_TYPES[sensor_type]['unit_of_measurement']
 
     @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return f"{self._coordinator.vin}_{self._sensor_type}"
-
-    @property
     def device_info(self):
         """Return device information."""
         return {
-            "identifiers": {(DOMAIN, self._coordinator.vin)},
-            "name": self._coordinator.name,
+            "identifiers": {(DOMAIN, self.coordinator.vin)},
+            "name": self.coordinator.name,
             "manufacturer": "STK Czechr",
             "model": "Vehicle Information",
         }
@@ -133,10 +137,10 @@ class STKczechrSensor(CoordinatorEntity, SensorEntity):
     @property
     def state(self):
         """Return the state of the sensor."""
-        if not self._coordinator.data or "error" in self._coordinator.data:
+        if not self.coordinator.data or "error" in self.coordinator.data:
             return None
             
-        data = self._coordinator.data
+        data = self.coordinator.data
         if self._sensor_type == "status":
             return data.get("status", STKStatus.UNKNOWN)
         return data.get(self._sensor_type)
