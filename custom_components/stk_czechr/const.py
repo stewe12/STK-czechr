@@ -35,6 +35,32 @@ SENSOR_TYPES = {
         "unit_of_measurement": "days",
         "enabled_by_default": True,
     },
+        "orv_number": {
+        "name": "Číslo ORV",
+        "icon": "mdi:card-account-details",
+        "api_field": "CisloOrv",
+        "enabled_by_default": False,
+    },
+    "tp_number": {
+        "name": "Číslo TP",
+        "icon": "mdi:card-account-details",
+        "api_field": "CisloTp",
+        "enabled_by_default": False,
+    },
+    
+    # Tire information - disabled by default
+    "front_tire": {
+        "name": "Pneumatiky náprava 1",
+        "icon": "mdi:tire",
+        "api_field": "NapravyPneu1",
+        "enabled_by_default": False,
+    },
+    "rear_tire": {
+        "name": "Pneumatiky náprava 2",
+        "icon": "mdi:tire",
+        "api_field": "NapravyPneu2",
+        "enabled_by_default": False,
+    },
     "status": {
         "name": "Stav STK",
         "icon": "mdi:car-wrench",
