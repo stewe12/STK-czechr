@@ -1,0 +1,16 @@
+{
+  "title": "STK czechr",
+  "step": {
+    "user": {
+      "title": "Nastavte své vozidlo",
+      "description": "Zadejte jméno vozidla a VIN pro sledování dat STK.",
+      "data": {
+        "name": "Jméno vozidla",
+        "vin": "VIN vozidla"
+      }
+    }
+  },
+  "error": {
+    "vin_exists": "Vozidlo s tímto VIN již existuje."
+  }
+}
