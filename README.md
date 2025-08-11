@@ -4,7 +4,7 @@
 
 Tento Home Assistant addon umožňuje sledování technických kontrol vozidel (STK) v České republice. K tomu používá veřejně dostupná data o vozidlech z [Data o vozidlech](https://www.dataovozidlech.cz). Umožňuje sledovat platnost STK, zbývající dny do vypršení, a další údaje o vozidlech pomocí VIN.
 
-## ⚠️ DŮLEŽITÉ - Verze 0.4.7
+## ⚠️ DŮLEŽITÉ - Verze 0.4.8
 
 **Web scraping již není podporován** kvůli změnám na dataovozidlech.cz. Addon nyní vyžaduje **oficiální API klíč**.
 
@@ -27,7 +27,7 @@ Tento Home Assistant addon umožňuje sledování technických kontrol vozidel (
 - Možnost konfigurace více vozidel.
 - Podpora několika jazyků (čeština, angličtina).
 - Integrace s Home Assistant pomocí platformy `sensor`.
-- **NOVÉ v 0.4.7**: Vylepšené formátování dat, optimalizované výchozí senzory, stabilní hodnoty.
+- **NOVÉ v 0.4.8**: Opraveno skákání hodnot mezi nedostupný a skutečnou hodnotou, vylepšené caching.
 
 ## Instalace
 
@@ -163,6 +163,7 @@ Pro problémy nebo dotazy:
 
 ## Verze
 
+- **0.4.8** - Opraveno skákání hodnot mezi nedostupný a skutečnou hodnotou, vylepšené caching
 - **0.4.7** - Vylepšené formátování dat, optimalizované výchozí senzory, stabilní hodnoty
 - **0.4.6** - Opraveny senzory a přidány chybějící hodnoty (rozměry, hluk, stav vozidla)
 - **0.4.5** - Opraveno zpracování API dat podle skutečné struktury odpovědi
