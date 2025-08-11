@@ -36,13 +36,14 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=f"{name} STK Data",
-            update_interval=timedelta(seconds=DEFAULT_UPDATE_INTERVAL),  # 24 hours
+            update_interval=timedelta(seconds=DEFAULT_UPDATE_INTERVAL),  # 1 minute
         )
         self.name = name
         self.vin = vin
         self.api_key = api_key
         self._session = aiohttp.ClientSession()
         self._last_request_time = None
+        self._cached_data = None  # Cache for storing last successful data
 
     async def _async_update_data(self):
         """Fetch data using official API with rate limiting."""
@@ -50,9 +51,9 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
             # Check if we should make a request (rate limiting)
             if not self._should_make_request():
                 _LOGGER.debug("Rate limit active, skipping request for VIN %s", self.vin)
-                if self.coordinator.data:
+                if self._cached_data:
                     _LOGGER.debug("Using cached data for VIN %s", self.vin)
-                    return self.coordinator.data
+                    return self._cached_data
                 else:
                     _LOGGER.warning("No cached data available for VIN %s", self.vin)
                     return {"error": "Rate limited and no cached data"}
@@ -69,28 +70,35 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.info("Fetching data via official API for VIN %s", self.vin)
             
             # Make API call
-            data = await self._call_api()
+            new_data = await self._call_api()
             
-            # Only update last request time if API call was successful
-            if data and "error" not in data:
-                self._last_request_time = datetime.now()
-                _LOGGER.debug("Successfully updated data for VIN %s", self.vin)
+            # Only update cache and timestamp if API call was successful
+            if new_data and "error" not in new_data:
+                # Check if data has actually changed
+                if self._has_data_changed(new_data):
+                    _LOGGER.info("Data changed for VIN %s, updating cache", self.vin)
+                    self._cached_data = new_data
+                    self._last_request_time = datetime.now()
+                else:
+                    _LOGGER.debug("No data changes for VIN %s, keeping existing cache", self.vin)
+                    # Still update timestamp to respect rate limiting
+                    self._last_request_time = datetime.now()
             else:
                 _LOGGER.warning("API call failed for VIN %s, keeping cached data", self.vin)
                 # Return cached data if available, otherwise return error
-                if self.coordinator.data:
-                    return self.coordinator.data
+                if self._cached_data:
+                    return self._cached_data
                 else:
-                    return data
+                    return new_data
             
-            return data
+            return self._cached_data or new_data
             
         except Exception as err:
             _LOGGER.error("Error fetching data for VIN %s: %s", self.vin, err)
             # Return cached data if available, otherwise return error
-            if self.coordinator.data:
+            if self._cached_data:
                 _LOGGER.debug("Returning cached data due to error for VIN %s", self.vin)
-                return self.coordinator.data
+                return self._cached_data
             else:
                 return {"error": str(err)}
 
@@ -370,6 +378,27 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_unload(self):
         """Clean up resources."""
         await self._session.close()
+
+    def _has_data_changed(self, new_data):
+        """Check if new data is different from cached data."""
+        if not self._cached_data:
+            return True  # First time, consider it changed
+        
+        # Compare important fields that should trigger updates
+        important_fields = [
+            "valid_until", "days_remaining", "status", "weight", "max_speed",
+            "engine_displacement", "length", "width", "height"
+        ]
+        
+        for field in important_fields:
+            old_value = self._cached_data.get(field)
+            new_value = new_data.get(field)
+            
+            if old_value != new_value:
+                _LOGGER.debug("Field %s changed: %s -> %s", field, old_value, new_value)
+                return True
+        
+        return False
 
 class STKczechrSensor(CoordinatorEntity, SensorEntity):
     """Representation of a STK czechr sensor."""

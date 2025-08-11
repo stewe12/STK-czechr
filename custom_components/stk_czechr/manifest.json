@@ -1,7 +1,7 @@
 {
   "domain": "stk_czechr",
   "name": "STK czechr",
-  "version": "0.4.8",
+  "version": "0.4.9",
   "documentation": "https://github.com/stewe12/STK-czechr",
   "dependencies": [],
   "codeowners": ["@Stewe12"],
