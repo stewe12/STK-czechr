@@ -11,12 +11,16 @@ PLATFORM_SENSOR = "sensor"
 # Error messages
 ERROR_INVALID_VIN = "Invalid VIN provided"
 ERROR_VIN_EXISTS = "This VIN is already configured"
-ERROR_API_TIMEOUT = "API request timed out"
-ERROR_API_CONNECTION = "Could not connect to API"
+ERROR_WEB_SCRAPING_FAILED = "Web scraping failed"
+ERROR_NO_DATA_FOUND = "No vehicle data found"
+ERROR_RATE_LIMITED = "Rate limited - try again later"
 
-# Update frequency
-DEFAULT_UPDATE_INTERVAL = 86400  # 24 hours in seconds
-API_TIMEOUT = 10  # seconds
+# Update frequency (24 hours in seconds)
+DEFAULT_UPDATE_INTERVAL = 86400  # 24 hours
+API_TIMEOUT = 30  # seconds (increased for web scraping)
+
+# Web scraping URLs
+WEB_SEARCH_URL = "https://dataovozidlech.cz/vyhledavani"
 
 # Sensor types with their translations
 SENSOR_TYPES = {
@@ -35,7 +39,7 @@ SENSOR_TYPES = {
         "unit_of_measurement": "days",
         "enabled_by_default": True,
     },
-        "orv_number": {
+    "orv_number": {
         "name": "Číslo ORV",
         "icon": "mdi:card-account-details",
         "api_field": "CisloOrv",
@@ -217,9 +221,6 @@ SENSOR_TYPES = {
         "enabled_by_default": False,
     },
 }
-
-# API endpoints
-API_ENDPOINT = "https://www.dataovozidlech.cz/api/Vozidlo/GetVehicleInfo"
 
 class STKStatus:
     VALID = "valid"
