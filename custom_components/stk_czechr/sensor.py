@@ -130,28 +130,41 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
                 return {"error": "No data received from API"}
             
             # Extract vehicle data from API response
-            # The API returns data in a specific structure
-            vehicle_data = data.get("data", {}) if isinstance(data.get("data"), dict) else data
+            # The API returns data in a specific structure with Status and Data fields
+            if "Status" in data and data["Status"] == 1 and "Data" in data:
+                vehicle_data = data["Data"]
+            else:
+                return {"error": "Invalid API response format"}
             
             processed_data = {
-                "valid_until": vehicle_data.get("pravidelnaTechnickaProhlidkaDo"),
-                "brand": vehicle_data.get("tovarniZnacka"),
-                "model": vehicle_data.get("obchodniOznaceni"),
-                "vin": vehicle_data.get("vin"),
-                "tp_number": vehicle_data.get("cisloTp"),
-                "orv_number": vehicle_data.get("cisloOrv"),
-                "color": vehicle_data.get("vozidloKaroserieBarva"),
-                "weight": vehicle_data.get("hmotnostiProvozni"),
-                "max_weight": vehicle_data.get("hmotnostiPov"),
-                "engine_power": vehicle_data.get("motorMaxVykon"),
-                "fuel_type": vehicle_data.get("palivo"),
-                "first_registration": vehicle_data.get("datumPrvniRegistrace"),
-                "first_registration_cz": vehicle_data.get("datumPrvniRegistraceVCr"),
-                "max_speed": vehicle_data.get("maximalniRychlost"),
-                "consumption_city": vehicle_data.get("spotrebaMesto"),
-                "consumption_highway": vehicle_data.get("spotrebaMimoMesto"),
-                "consumption_combined": vehicle_data.get("spotrebaKombinovana"),
-                "co2_emissions": vehicle_data.get("emiseCO2"),
+                "valid_until": vehicle_data.get("PravidelnaTechnickaProhlidkaDo"),
+                "brand": vehicle_data.get("TovarniZnacka"),
+                "model": vehicle_data.get("ObchodniOznaceni"),
+                "vin": vehicle_data.get("VIN"),
+                "tp_number": vehicle_data.get("CisloTp"),
+                "orv_number": vehicle_data.get("CisloOrv"),
+                "color": vehicle_data.get("VozidloKaroserieBarva"),
+                "weight": vehicle_data.get("HmotnostiProvozni"),
+                "max_weight": vehicle_data.get("HmotnostiPripPov"),
+                "engine_power": vehicle_data.get("MotorMaxVykon"),
+                "fuel_type": vehicle_data.get("Palivo"),
+                "first_registration": vehicle_data.get("DatumPrvniRegistrace"),
+                "first_registration_cz": vehicle_data.get("DatumPrvniRegistraceVCr"),
+                "max_speed": vehicle_data.get("NejvyssiRychlost"),
+                "consumption_city": vehicle_data.get("SpotrebaNa100Km"),
+                "consumption_highway": vehicle_data.get("SpotrebaNa100Km"),
+                "consumption_combined": vehicle_data.get("SpotrebaNa100Km"),
+                "co2_emissions": vehicle_data.get("EmiseCO2"),
+                "vehicle_type": vehicle_data.get("VozidloDruh"),
+                "category": vehicle_data.get("Kategorie"),
+                "engine_displacement": vehicle_data.get("MotorZdvihObjem"),
+                "dimensions": vehicle_data.get("Rozmery"),
+                "wheelbase": vehicle_data.get("RozmeryRozvor"),
+                "noise_stationary": vehicle_data.get("HlukStojiciOtacky"),
+                "noise_driving": vehicle_data.get("HlukJizda"),
+                "status_name": vehicle_data.get("StatusNazev"),
+                "owners_count": vehicle_data.get("PocetVlastniku"),
+                "operators_count": vehicle_data.get("PocetProvozovatelu"),
             }
             
             # Calculate derived values

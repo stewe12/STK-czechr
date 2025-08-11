@@ -17,8 +17,8 @@ ERROR_NO_DATA_FOUND = "No vehicle data found"
 ERROR_RATE_LIMITED = "Rate limited - try again later"
 ERROR_API_KEY_MISSING = "API key is required for dataovozidlech.cz"
 
-# Update frequency (24 hours in seconds)
-DEFAULT_UPDATE_INTERVAL = 86400  # 24 hours
+# Update frequency (1 minute in seconds for rate limiting)
+DEFAULT_UPDATE_INTERVAL = 60  # 1 minute
 API_TIMEOUT = 30  # seconds
 
 # API endpoints
