@@ -4,7 +4,7 @@
 
 Tento Home Assistant addon umožňuje sledování technických kontrol vozidel (STK) v České republice. K tomu používá veřejně dostupná data o vozidlech z [Data o vozidlech](https://www.dataovozidlech.cz). Umožňuje sledovat platnost STK, zbývající dny do vypršení, a další údaje o vozidlech pomocí VIN.
 
-## ⚠️ DŮLEŽITÉ - Verze 0.4.2
+## ⚠️ DŮLEŽITÉ - Verze 0.4.5
 
 **Web scraping již není podporován** kvůli změnám na dataovozidlech.cz. Addon nyní vyžaduje **oficiální API klíč**.
 
@@ -27,7 +27,7 @@ Tento Home Assistant addon umožňuje sledování technických kontrol vozidel (
 - Možnost konfigurace více vozidel.
 - Podpora několika jazyků (čeština, angličtina).
 - Integrace s Home Assistant pomocí platformy `sensor`.
-- **NOVÉ v 0.4.2**: Správná implementace oficiálního API podle dokumentace.
+- **NOVÉ v 0.4.5**: Opraveno zpracování API dat podle skutečné struktury odpovědi.
 
 ## Instalace
 
@@ -50,6 +50,22 @@ Po instalaci budete potřebovat:
 - **Není viditelný** v GitHub repozitáři
 - **Můžete ho změnit** v options flow integrace
 - **Je šifrovaný** v Home Assistant storage
+
+## Debug stránka
+
+Pro testování API a diagnostiku problémů je k dispozici debug stránka:
+
+### Jak použít:
+1. **Restartujte Home Assistant** po instalaci
+2. **Otevřete**: `http://vaše-ha-ip:8123/local/custom_components/stk_czechr/www/debug.html`
+3. **Zadejte VIN a API klíč**
+4. **Klikněte na "Testovat API"**
+
+### Co debug stránka ukazuje:
+- ✅ **HTTP status** a response headers
+- ✅ **JSON data** z API
+- ✅ **Raw response** pro diagnostiku
+- ✅ **Chyby** a jejich detaily
 
 ## API Registrace
 
@@ -76,6 +92,14 @@ Po instalaci budete potřebovat:
 
 **Zkontrolujte VIN** - ujistěte se, že VIN je správně zadané a existuje v databázi.
 
+### Problémy s JSON parsingem:
+
+**Použijte debug stránku** - otevřete debug stránku a zkontrolujte raw response.
+
+### "Failed to fetch" chyba v debug stránce:
+
+**Restartujte Home Assistant** - HTTP endpoint se registruje při startu.
+
 ### Jak získat API klíč:
 
 1. **Registrace**: [dataovozidlech.cz/registraceApi](https://dataovozidlech.cz/registraceApi)
@@ -88,6 +112,7 @@ Po instalaci budete potřebovat:
 - **"Je API klíč bezpečný?"** - Ano, ukládá se šifrovaně v Home Assistant
 - **"Můžu změnit API klíč?"** - Ano, v options flow integrace
 - **"Je API zdarma?"** - Zkontrolujte podmínky na dataovozidlech.cz
+- **"Jak testovat API?"** - Použijte debug stránku
 
 ## Podporované senzory
 
@@ -113,23 +138,31 @@ Po instalaci budete potřebovat:
 
 ### Rate Limiting:
 - **API limit**: 27 dotazů za minutu
-- **Addon limit**: 24 hodin (86400 sekund)
+- **Addon limit**: 1 dotaz za minutu (pro více vozidel)
 
 ### Bezpečnost:
 - **API klíč**: Šifrovaně uložen v Home Assistant
 - **Komunikace**: HTTPS s API_KEY header autentifikací
 - **Rate limiting**: Respektuje API omezení
 
+### Debug:
+- **Debug stránka**: `/local/custom_components/stk_czechr/www/debug.html`
+- **HTTP endpoint**: `/api/stk_czechr/debug`
+
 ## Podpora
 
 Pro problémy nebo dotazy:
 1. Zkontrolujte logy v Home Assistant
 2. Ověřte, že VIN je správně zadané
-3. Zkuste restartovat Home Assistant
-4. Pokud problém přetrvává, vytvořte issue na GitHub
+3. **Použijte debug stránku** pro testování API
+4. Zkuste restartovat Home Assistant
+5. Pokud problém přetrvává, vytvořte issue na GitHub
 
 ## Verze
 
+- **0.4.5** - Opraveno zpracování API dat podle skutečné struktury odpovědi
+- **0.4.4** - Opravena registrace HTTP endpointu pro debug stránku
+- **0.4.3** - Přidána debug stránka pro testování API, optimalizovaný rate limiting (1 call/min)
 - **0.4.2** - Správná implementace oficiálního API podle dokumentace
 - **0.4.1** - Přidáno bezpečné zadávání API klíče v konfiguraci
 - **0.4.0** - Přechod na oficiální API (vyžaduje registraci), web scraping odstraněn
