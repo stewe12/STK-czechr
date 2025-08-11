@@ -1,5 +1,6 @@
 {
   "name": "STK czechr",
   "content_in_root": false,
-  "country": ["CZ"]
+  "country": ["CZ"],
+  "icon": "https://raw.githubusercontent.com/stewe12/STK-czechr/refs/heads/main/custom_components/stk_czechr/www/STK.png"
 }
