@@ -1,12 +1,11 @@
 {
   "domain": "stk_czechr",
   "name": "STK czechr",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "documentation": "https://github.com/stewe12/STK-czechr",
   "dependencies": [],
   "codeowners": ["@Stewe12"],
   "requirements": ["aiohttp", "async_timeout"],
   "config_flow": true,
-  "iot_class": "cloud_polling",
-  "icon": "/local/custom_components/stk_czechr/www/STK.png"
+  "iot_class": "cloud_polling"
 }
