@@ -137,7 +137,7 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
                 return {"error": "Invalid API response format"}
             
             processed_data = {
-                "valid_until": vehicle_data.get("PravidelnaTechnickaProhlidkaDo"),
+                "valid_until": self._format_date(vehicle_data.get("PravidelnaTechnickaProhlidkaDo")),
                 "brand": vehicle_data.get("TovarniZnacka"),
                 "model": vehicle_data.get("ObchodniOznaceni"),
                 "vin": vehicle_data.get("VIN"),
@@ -148,23 +148,28 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
                 "max_weight": vehicle_data.get("HmotnostiPripPov"),
                 "engine_power": vehicle_data.get("MotorMaxVykon"),
                 "fuel_type": vehicle_data.get("Palivo"),
-                "first_registration": vehicle_data.get("DatumPrvniRegistrace"),
-                "first_registration_cz": vehicle_data.get("DatumPrvniRegistraceVCr"),
+                "first_registration": self._format_date(vehicle_data.get("DatumPrvniRegistrace")),
+                "first_registration_cz": self._format_date(vehicle_data.get("DatumPrvniRegistraceVCr")),
                 "max_speed": vehicle_data.get("NejvyssiRychlost"),
-                "consumption_city": vehicle_data.get("SpotrebaNa100Km"),
-                "consumption_highway": vehicle_data.get("SpotrebaNa100Km"),
-                "consumption_combined": vehicle_data.get("SpotrebaNa100Km"),
-                "co2_emissions": vehicle_data.get("EmiseCO2"),
+                "consumption_city": self._clean_consumption(vehicle_data.get("SpotrebaNa100Km")),
+                "consumption_highway": self._clean_consumption(vehicle_data.get("SpotrebaNa100Km")),
+                "consumption_combined": self._clean_consumption(vehicle_data.get("SpotrebaNa100Km")),
+                "co2_emissions": self._clean_emissions(vehicle_data.get("EmiseCO2")),
                 "vehicle_type": vehicle_data.get("VozidloDruh"),
                 "category": vehicle_data.get("Kategorie"),
                 "engine_displacement": vehicle_data.get("MotorZdvihObjem"),
                 "dimensions": vehicle_data.get("Rozmery"),
                 "wheelbase": vehicle_data.get("RozmeryRozvor"),
-                "noise_stationary": vehicle_data.get("HlukStojiciOtacky"),
+                "noise_stationary": self._clean_noise(vehicle_data.get("HlukStojiciOtacky")),
                 "noise_driving": vehicle_data.get("HlukJizda"),
                 "status_name": vehicle_data.get("StatusNazev"),
                 "owners_count": vehicle_data.get("PocetVlastniku"),
                 "operators_count": vehicle_data.get("PocetProvozovatelu"),
+                "tires_front": self._extract_tire_info(vehicle_data.get("NapravyPneuRafky"), 0),
+                "tires_rear": self._extract_tire_info(vehicle_data.get("NapravyPneuRafky"), 1),
+                "length": self._extract_dimension(vehicle_data.get("Rozmery"), 0),
+                "width": self._extract_dimension(vehicle_data.get("Rozmery"), 1),
+                "height": self._extract_dimension(vehicle_data.get("Rozmery"), 2),
             }
             
             # Calculate derived values
@@ -213,8 +218,105 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
             return True
         
         time_since_last = datetime.now() - self._last_request_time
-        # Ensure at least 24 hours between requests
+        # Ensure at least 1 minute between requests
         return time_since_last.total_seconds() >= DEFAULT_UPDATE_INTERVAL
+
+    def _extract_dimension(self, dimensions_str, index):
+        """Extract specific dimension from dimensions string."""
+        if not dimensions_str:
+            return None
+        
+        try:
+            # Format: "2210/ 780/ 1305" -> ["2210", "780", "1305"]
+            parts = [part.strip() for part in dimensions_str.split('/')]
+            if len(parts) > index and parts[index].strip():
+                return parts[index].strip()
+        except Exception:
+            pass
+        
+        return None
+
+    def _format_date(self, date_str):
+        """Format date string for Home Assistant."""
+        if not date_str:
+            return None
+        
+        try:
+            # Parse ISO date format and return YYYY-MM-DD
+            if 'T' in date_str:
+                date_part = date_str.split('T')[0]
+                return date_part
+            return date_str
+        except Exception:
+            return None
+
+    def _clean_consumption(self, consumption_str):
+        """Clean consumption string and extract numeric value."""
+        if not consumption_str:
+            return None
+        
+        try:
+            # Format: " / / 3.5" -> extract "3.5"
+            parts = [part.strip() for part in consumption_str.split('/')]
+            for part in parts:
+                if part and part.strip() and part.strip() != "":
+                    try:
+                        return float(part.strip())
+                    except ValueError:
+                        continue
+        except Exception:
+            pass
+        
+        return None
+
+    def _clean_emissions(self, emissions_str):
+        """Clean emissions string and extract numeric value."""
+        if not emissions_str:
+            return None
+        
+        try:
+            # Format: " / / " -> return None
+            parts = [part.strip() for part in emissions_str.split('/')]
+            for part in parts:
+                if part and part.strip() and part.strip() != "":
+                    try:
+                        return float(part.strip())
+                    except ValueError:
+                        continue
+        except Exception:
+            pass
+        
+        return None
+
+    def _clean_noise(self, noise_str):
+        """Clean noise string and extract numeric value."""
+        if not noise_str:
+            return None
+        
+        try:
+            # Format: "87/ 3750" -> extract "87"
+            parts = [part.strip() for part in noise_str.split('/')]
+            if parts and parts[0].strip():
+                return float(parts[0].strip())
+        except Exception:
+            pass
+        
+        return None
+
+    def _extract_tire_info(self, tires_str, index):
+        """Extract tire information from tires string."""
+        if not tires_str:
+            return None
+        
+        try:
+            # Format: "120/70-15 M/C 56S TL/ 3.5 x 15;\n150/70-14 M/C 66S TL/ 4.25 x 14;\n/ ;\n/ ;\n"
+            lines = [line.strip() for line in tires_str.split(';') if line.strip()]
+            if len(lines) > index and lines[index].strip():
+                return lines[index].strip()
+        except Exception:
+            pass
+        
+        return None
 
     async def async_unload(self):
         """Clean up resources."""
@@ -265,6 +367,15 @@ class STKczechrSensor(CoordinatorEntity, SensorEntity):
             return data.get("status", STKStatus.UNKNOWN)
         
         value = data.get(self._sensor_type)
+        
+        # Handle None values consistently
+        if value is None:
+            # For numeric sensors, return 0 instead of None to avoid state changes
+            if hasattr(self, '_attr_unit_of_measurement') and self._attr_unit_of_measurement:
+                return 0
+            # For text sensors, return empty string instead of None
+            return ""
+        
         _LOGGER.debug("Sensor %s value: %s", self._attr_name, value)
         return value
 
