@@ -46,13 +46,23 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
             # Check if we should make a request (rate limiting)
             if not self._should_make_request():
                 _LOGGER.debug("Rate limit active, skipping request for VIN %s", self.vin)
-                return self.coordinator.data if self.coordinator.data else {"error": "Rate limited"}
+                if self.coordinator.data:
+                    _LOGGER.debug("Using cached data for VIN %s", self.vin)
+                    return self.coordinator.data
+                else:
+                    _LOGGER.warning("No cached data available for VIN %s", self.vin)
+                    return {"error": "Rate limited and no cached data"}
             
             _LOGGER.info("Fetching data via web scraping for VIN %s", self.vin)
             data = await self._scrape_web_data()
             
             # Update last request time
             self._last_request_time = datetime.now()
+            
+            if data and "error" not in data:
+                _LOGGER.info("Successfully fetched data for VIN %s: %s", self.vin, list(data.keys()))
+            else:
+                _LOGGER.error("Failed to fetch data for VIN %s: %s", self.vin, data.get("error", "Unknown error"))
             
             return data
             
@@ -145,6 +155,8 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
     def _parse_html_data(self, html_content):
         """Parse vehicle data from HTML content."""
         try:
+            _LOGGER.debug("Parsing HTML data for VIN %s", self.vin)
+            
             # Extract data from HTML table
             data = {}
             
@@ -153,16 +165,20 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
             stk_match = re.search(stk_pattern, html_content)
             if stk_match:
                 valid_until = stk_match.group(1).strip()
+                _LOGGER.debug("Found STK date: %s", valid_until)
                 if valid_until and valid_until != "":
                     # Convert date from DD.MM.YYYY to YYYY-MM-DD format
                     try:
                         date_obj = datetime.strptime(valid_until, "%d.%m.%Y")
                         data["valid_until"] = date_obj.strftime("%Y-%m-%d")
+                        _LOGGER.debug("Converted STK date: %s", data["valid_until"])
                     except ValueError:
                         _LOGGER.error("Error parsing STK date: %s", valid_until)
                         data["valid_until"] = None
                 else:
                     data["valid_until"] = None
+            else:
+                _LOGGER.warning("STK date not found in HTML content")
             
             # Extract other vehicle information
             patterns = {
@@ -186,15 +202,19 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
                     value = match.group(1).strip()
                     if value and value != "":
                         data[key] = value
+                        _LOGGER.debug("Found %s: %s", key, value)
             
             # Calculate derived values
             if "valid_until" in data and data["valid_until"]:
                 data["days_remaining"] = self._calculate_days_remaining(data["valid_until"])
                 data["status"] = self._determine_status(data["valid_until"])
+                _LOGGER.debug("Calculated days_remaining: %s, status: %s", data["days_remaining"], data["status"])
             else:
                 data["days_remaining"] = None
                 data["status"] = STKStatus.UNKNOWN
+                _LOGGER.warning("Could not calculate days_remaining and status - no valid_until date")
             
+            _LOGGER.info("Successfully parsed data with %d fields", len(data))
             return data
             
         except Exception as err:
@@ -259,13 +279,21 @@ class STKczechrSensor(CoordinatorEntity, SensorEntity):
     @property
     def state(self):
         """Return the state of the sensor."""
-        if not self.coordinator.data or "error" in self.coordinator.data:
+        if not self.coordinator.data:
+            _LOGGER.debug("No data available for sensor %s", self._attr_name)
+            return None
+            
+        if "error" in self.coordinator.data:
+            _LOGGER.warning("Error in data for sensor %s: %s", self._attr_name, self.coordinator.data["error"])
             return None
             
         data = self.coordinator.data
         if self._sensor_type == "status":
             return data.get("status", STKStatus.UNKNOWN)
-        return data.get(self._sensor_type)
+        
+        value = data.get(self._sensor_type)
+        _LOGGER.debug("Sensor %s value: %s", self._attr_name, value)
+        return value
 
 async def async_setup_entry(hass, entry, async_add_entities):
     """Set up STK czechr sensors from a config entry."""
