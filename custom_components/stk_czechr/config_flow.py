@@ -2,7 +2,15 @@
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
-from .const import DOMAIN, CONF_NAME, CONF_VIN, ERROR_INVALID_VIN, ERROR_VIN_EXISTS
+from .const import (
+    DOMAIN, 
+    CONF_NAME, 
+    CONF_VIN, 
+    CONF_API_KEY,
+    ERROR_INVALID_VIN, 
+    ERROR_VIN_EXISTS,
+    ERROR_API_KEY_MISSING
+)
 
 class STKczechrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for STK czechr."""
@@ -22,6 +30,9 @@ class STKczechrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # Validate VIN
             elif not self._validate_vin(user_input[CONF_VIN]):
                 errors["base"] = ERROR_INVALID_VIN
+            # Validate API key
+            elif not user_input.get(CONF_API_KEY):
+                errors["base"] = ERROR_API_KEY_MISSING
             else:
                 return self.async_create_entry(
                     title=user_input[CONF_NAME],
@@ -33,6 +44,7 @@ class STKczechrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({
                 vol.Required(CONF_NAME): str,
                 vol.Required(CONF_VIN): str,
+                vol.Required(CONF_API_KEY): str,
             }),
             errors=errors,
         )
@@ -49,3 +61,25 @@ class STKczechrConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(config_entry):
         """Get the options flow for this handler."""
         return STKczechrOptionsFlow(config_entry)
+
+class STKczechrOptionsFlow(config_entries.OptionsFlow):
+    """Handle options."""
+
+    def __init__(self, config_entry):
+        """Initialize options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input=None):
+        """Manage the options."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema({
+                vol.Optional(
+                    CONF_API_KEY,
+                    default=self.config_entry.data.get(CONF_API_KEY, "")
+                ): str,
+            })
+        )

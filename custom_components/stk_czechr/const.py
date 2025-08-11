@@ -4,6 +4,7 @@ DOMAIN = "stk_czechr"
 # Config keys
 CONF_NAME = "name"
 CONF_VIN = "vin"
+CONF_API_KEY = "api_key"
 
 # Platform names
 PLATFORM_SENSOR = "sensor"
@@ -11,16 +12,19 @@ PLATFORM_SENSOR = "sensor"
 # Error messages
 ERROR_INVALID_VIN = "Invalid VIN provided"
 ERROR_VIN_EXISTS = "This VIN is already configured"
-ERROR_WEB_SCRAPING_FAILED = "Web scraping failed"
+ERROR_API_FAILED = "API request failed"
 ERROR_NO_DATA_FOUND = "No vehicle data found"
 ERROR_RATE_LIMITED = "Rate limited - try again later"
+ERROR_API_KEY_MISSING = "API key is required for dataovozidlech.cz"
 
 # Update frequency (24 hours in seconds)
 DEFAULT_UPDATE_INTERVAL = 86400  # 24 hours
-API_TIMEOUT = 30  # seconds (increased for web scraping)
+API_TIMEOUT = 30  # seconds
 
-# Web scraping URLs
-WEB_SEARCH_URL = "https://dataovozidlech.cz/vyhledavani"
+# API endpoints
+API_BASE_URL = "https://dataovozidlech.cz/api"
+API_REGISTRATION_URL = "https://dataovozidlech.cz/registraceApi"
+API_DOCUMENTATION_URL = "https://dataovozidlech.cz/data/RSV_Verejna_API_DK_v1_0.pdf"
 
 # Sensor types with their translations
 SENSOR_TYPES = {
