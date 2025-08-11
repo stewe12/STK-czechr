@@ -4,7 +4,7 @@
 
 Tento Home Assistant addon umožňuje sledování technických kontrol vozidel (STK) v České republice. K tomu používá veřejně dostupná data o vozidlech z [Data o vozidlech](https://www.dataovozidlech.cz). Umožňuje sledovat platnost STK, zbývající dny do vypršení, a další údaje o vozidlech pomocí VIN.
 
-## ⚠️ DŮLEŽITÉ - Verze 0.4.1
+## ⚠️ DŮLEŽITÉ - Verze 0.4.2
 
 **Web scraping již není podporován** kvůli změnám na dataovozidlech.cz. Addon nyní vyžaduje **oficiální API klíč**.
 
@@ -27,7 +27,7 @@ Tento Home Assistant addon umožňuje sledování technických kontrol vozidel (
 - Možnost konfigurace více vozidel.
 - Podpora několika jazyků (čeština, angličtina).
 - Integrace s Home Assistant pomocí platformy `sensor`.
-- **NOVÉ v 0.4.1**: Bezpečné zadávání API klíče v konfiguraci.
+- **NOVÉ v 0.4.2**: Správná implementace oficiálního API podle dokumentace.
 
 ## Instalace
 
@@ -72,6 +72,10 @@ Po instalaci budete potřebovat:
 
 **Zkontrolujte konfiguraci** - API klíč musí být zadán při konfiguraci.
 
+### "Vehicle not found" chyba:
+
+**Zkontrolujte VIN** - ujistěte se, že VIN je správně zadané a existuje v databázi.
+
 ### Jak získat API klíč:
 
 1. **Registrace**: [dataovozidlech.cz/registraceApi](https://dataovozidlech.cz/registraceApi)
@@ -103,17 +107,17 @@ Po instalaci budete potřebovat:
 ## Technické detaily
 
 ### API:
-- **URL**: https://dataovozidlech.cz/api
+- **URL**: https://api.dataovozidlech.cz/api/vehicletechnicaldata/v2
 - **Registrace**: https://dataovozidlech.cz/registraceApi
 - **Dokumentace**: https://dataovozidlech.cz/data/RSV_Verejna_API_DK_v1_0.pdf
 
 ### Rate Limiting:
-- **Interval**: 24 hodin (86400 sekund)
-- **Omezení**: Podle podmínek API
+- **API limit**: 27 dotazů za minutu
+- **Addon limit**: 24 hodin (86400 sekund)
 
 ### Bezpečnost:
 - **API klíč**: Šifrovaně uložen v Home Assistant
-- **Komunikace**: HTTPS s Bearer token autentifikací
+- **Komunikace**: HTTPS s API_KEY header autentifikací
 - **Rate limiting**: Respektuje API omezení
 
 ## Podpora
@@ -126,6 +130,7 @@ Pro problémy nebo dotazy:
 
 ## Verze
 
+- **0.4.2** - Správná implementace oficiálního API podle dokumentace
 - **0.4.1** - Přidáno bezpečné zadávání API klíče v konfiguraci
 - **0.4.0** - Přechod na oficiální API (vyžaduje registraci), web scraping odstraněn
 - **0.3.2** - Opravena HTTP metoda pro web scraping (GET místo POST), vyřešena chyba 405
