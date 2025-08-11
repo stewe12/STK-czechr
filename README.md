@@ -4,6 +4,22 @@
 
 Tento Home Assistant addon umožňuje sledování technických kontrol vozidel (STK) v České republice. K tomu používá veřejně dostupná data o vozidlech z [Data o vozidlech](https://www.dataovozidlech.cz). Umožňuje sledovat platnost STK, zbývající dny do vypršení, a další údaje o vozidlech pomocí VIN.
 
+## ⚠️ DŮLEŽITÉ - Verze 0.4.1
+
+**Web scraping již není podporován** kvůli změnám na dataovozidlech.cz. Addon nyní vyžaduje **oficiální API klíč**.
+
+### Co potřebujete udělat:
+
+1. **Zaregistrujte se pro API** na [dataovozidlech.cz/registraceApi](https://dataovozidlech.cz/registraceApi)
+2. **Získejte API klíč** podle dokumentace
+3. **Zadejte API klíč** při konfiguraci addonu (bezpečně uložen v Home Assistant)
+
+### Proč se to změnilo:
+
+- Web scraping přestal fungovat (chyba 405)
+- dataovozidlech.cz má oficiální API
+- API je spolehlivější a bezpečnější
+
 ## Funkce
 
 - Sledování platnosti STK a zbývajících dní do vypršení platnosti.
@@ -11,7 +27,7 @@ Tento Home Assistant addon umožňuje sledování technických kontrol vozidel (
 - Možnost konfigurace více vozidel.
 - Podpora několika jazyků (čeština, angličtina).
 - Integrace s Home Assistant pomocí platformy `sensor`.
-- **NOVÉ v 0.3.1**: Opravena ikona pro HACS a integrace, vylepšené logging.
+- **NOVÉ v 0.4.1**: Bezpečné zadávání API klíče v konfiguraci.
 
 ## Instalace
 
@@ -22,66 +38,52 @@ Tento Home Assistant addon umožňuje sledování technických kontrol vozidel (
 
 ## Konfigurace
 
-Po instalaci bude potřeba zadat informace o vozidle. Pro každý záznam budete potřebovat VIN číslo vozidla a pojmenování vozidla. Na základě VIN bude addon automaticky stahovat data o STK.
+Po instalaci budete potřebovat:
 
-## Bezpečný přístup (verze 0.3.1)
+1. **Název vozidla** - libovolný název pro identifikaci
+2. **VIN číslo** - 17místné identifikační číslo vozidla
+3. **API klíč** - klíč získaný z dataovozidlech.cz
 
-**Důležité**: Addon používá pouze web scraping s přísným rate limiting pro bezpečnost:
+### Bezpečnost API klíče:
 
-### Rate Limiting:
-- **Maximálně jednou za 24 hodin** - addon si pamatuje čas posledního požadavku
-- **Automatické zpoždění** - mezi požadavky jsou 2-3 sekundové pauzy
-- **Respektování serveru** - používá realistické HTTP hlavičky
+- **API klíč se ukládá bezpečně** v Home Assistant konfiguraci
+- **Není viditelný** v GitHub repozitáři
+- **Můžete ho změnit** v options flow integrace
+- **Je šifrovaný** v Home Assistant storage
 
-### Jak to funguje:
+## API Registrace
 
-1. **První spuštění** - addon stáhne data okamžitě
-2. **Následné spuštění** - kontroluje, zda uplynulo 24 hodin od posledního požadavku
-3. **Rate limiting** - pokud neuplynulo 24 hodin, použije poslední data
-4. **Bezpečné požadavky** - simuluje reálné prohlížeče s proper headers
+### Krok 1: Registrace
+1. Jděte na [dataovozidlech.cz/registraceApi](https://dataovozidlech.cz/registraceApi)
+2. Vyplňte registrační formulář
+3. Počkejte na schválení
 
-### Výhody nového přístupu:
+### Krok 2: Dokumentace
+- Stáhněte si [API dokumentaci](https://dataovozidlech.cz/data/RSV_Verejna_API_DK_v1_0.pdf)
+- Přečtěte si podmínky použití
 
-- **Bezpečný** - nehrozí ban nebo blokování
-- **Respektující** - nezatěžuje server častými požadavky
-- **Spolehlivý** - data jsou aktualizována jednou denně
-- **Automatický** - nevyžaduje manuální zásahy
+### Krok 3: Použití
+- Zadejte API klíč při konfiguraci addonu
+- Addon automaticky použije klíč pro API volání
 
 ## Řešení problémů
 
-### Addon nefunguje nebo neukazuje data:
+### Addon ukazuje "API key required":
 
-1. **Zkontrolujte logy** - v Home Assistant jděte do Developer Tools > Logs
-2. **Ověřte VIN** - ujistěte se, že VIN je správně zadaný (17 znaků)
-3. **Zkuste restart** - restartujte Home Assistant
-4. **Zkontrolujte internet** - addon potřebuje přístup k dataovozidlech.cz
+**Zkontrolujte konfiguraci** - API klíč musí být zadán při konfiguraci.
 
-### Časté chyby:
+### Jak získat API klíč:
 
-- `"Rate limited"` - normální chování, data se aktualizují jednou denně
-- `"Web scraping failed"` - problém s přístupem k webové stránce
-- `"Invalid VIN"` - špatně zadané VIN číslo
+1. **Registrace**: [dataovozidlech.cz/registraceApi](https://dataovozidlech.cz/registraceApi)
+2. **Dokumentace**: [API dokumentace](https://dataovozidlech.cz/data/RSV_Verejna_API_DK_v1_0.pdf)
+3. **Podmínky**: Přečtěte si podmínky použití API
 
-### Rate Limiting:
+### Časté dotazy:
 
-Pokud vidíte zprávu "Rate limited", je to normální chování:
-- Addon si pamatuje čas posledního požadavku
-- Nová data se stáhnou až po 24 hodinách
-- Mezitím se používají poslední dostupná data
-
-### Debugging:
-
-Pro detailnější informace o tom, co se děje:
-1. Povolte debug logging v `configuration.yaml`:
-```yaml
-logger:
-  default: info
-  logs:
-    custom_components.stk_czechr: debug
-```
-
-2. Restartujte Home Assistant
-3. Zkontrolujte logy v Developer Tools > Logs
+- **"Kde zadám API klíč?"** - Při konfiguraci integrace v Home Assistant
+- **"Je API klíč bezpečný?"** - Ano, ukládá se šifrovaně v Home Assistant
+- **"Můžu změnit API klíč?"** - Ano, v options flow integrace
+- **"Je API zdarma?"** - Zkontrolujte podmínky na dataovozidlech.cz
 
 ## Podporované senzory
 
@@ -100,15 +102,19 @@ logger:
 
 ## Technické detaily
 
+### API:
+- **URL**: https://dataovozidlech.cz/api
+- **Registrace**: https://dataovozidlech.cz/registraceApi
+- **Dokumentace**: https://dataovozidlech.cz/data/RSV_Verejna_API_DK_v1_0.pdf
+
 ### Rate Limiting:
 - **Interval**: 24 hodin (86400 sekund)
-- **Zpoždění**: 2-3 sekundy mezi požadavky
-- **Headers**: Realistické prohlížeče (Chrome, Firefox)
+- **Omezení**: Podle podmínek API
 
-### Web Scraping:
-- **URL**: https://dataovozidlech.cz/vyhledavani
-- **Metoda**: POST request s VIN
-- **Parsing**: HTML tabulka s daty vozidla
+### Bezpečnost:
+- **API klíč**: Šifrovaně uložen v Home Assistant
+- **Komunikace**: HTTPS s Bearer token autentifikací
+- **Rate limiting**: Respektuje API omezení
 
 ## Podpora
 
@@ -120,6 +126,9 @@ Pro problémy nebo dotazy:
 
 ## Verze
 
+- **0.4.1** - Přidáno bezpečné zadávání API klíče v konfiguraci
+- **0.4.0** - Přechod na oficiální API (vyžaduje registraci), web scraping odstraněn
+- **0.3.2** - Opravena HTTP metoda pro web scraping (GET místo POST), vyřešena chyba 405
 - **0.3.1** - Opravena ikona pro HACS a integrace, vylepšené logging pro debugging
 - **0.3.0** - Přechod na bezpečný web scraping s rate limiting (maximálně jednou za den)
 - **0.2.0** - Přidána podpora web scraping, více API endpointů, lepší error handling
