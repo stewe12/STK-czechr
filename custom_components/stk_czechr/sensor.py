@@ -84,28 +84,36 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
     async def _call_api(self):
         """Call the official API."""
         try:
-            # TODO: Replace with actual API endpoint once documentation is available
-            # This is a placeholder implementation
+            # API call according to official documentation
             headers = {
-                "Authorization": f"Bearer {self.api_key}",
+                "API_KEY": self.api_key,  # Correct header name
                 "Content-Type": "application/json",
-                "User-Agent": "HomeAssistant-STK-czechr/0.4.0"
+                "User-Agent": "HomeAssistant-STK-czechr/0.4.1"
             }
             
-            # Placeholder API call - will be replaced with actual endpoint
-            url = f"{API_BASE_URL}/vehicle/{self.vin}"
+            # Correct API endpoint with vin parameter
+            url = f"{API_BASE_URL}?vin={self.vin}"
+            
+            _LOGGER.debug("Calling API: %s", url)
             
             async with async_timeout.timeout(API_TIMEOUT):
                 response = await self._session.get(url, headers=headers)
                 
+                _LOGGER.debug("API response status: %s", response.status)
+                
                 if response.status == 200:
                     data = await response.json()
+                    _LOGGER.debug("API response data: %s", data)
                     return self._process_api_data(data)
                 elif response.status == 401:
                     return {"error": "Invalid API key"}
                 elif response.status == 404:
                     return {"error": "Vehicle not found"}
+                elif response.status == 429:
+                    return {"error": "Rate limited - too many requests"}
                 else:
+                    error_text = await response.text()
+                    _LOGGER.error("API error %s: %s", response.status, error_text)
                     return {"error": f"API request failed: {response.status}"}
                     
         except Exception as e:
@@ -115,22 +123,35 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
     def _process_api_data(self, data):
         """Process API response data."""
         try:
-            # TODO: Implement actual data processing once API format is known
-            # This is a placeholder implementation
+            _LOGGER.debug("Processing API data: %s", data)
+            
+            # Check if data is empty or has error
+            if not data or not isinstance(data, dict):
+                return {"error": "No data received from API"}
+            
+            # Extract vehicle data from API response
+            # The API returns data in a specific structure
+            vehicle_data = data.get("data", {}) if isinstance(data.get("data"), dict) else data
+            
             processed_data = {
-                "valid_until": data.get("PravidelnaTechnickaProhlidkaDo"),
-                "brand": data.get("TovarniZnacka"),
-                "model": data.get("ObchodniOznaceni"),
-                "vin": data.get("VIN"),
-                "tp_number": data.get("CisloTp"),
-                "orv_number": data.get("CisloOrv"),
-                "color": data.get("VozidloKaroserieBarva"),
-                "weight": data.get("HmotnostiProvozni"),
-                "max_weight": data.get("HmotnostiPov"),
-                "engine_power": data.get("MotorMaxVykon"),
-                "fuel_type": data.get("Palivo"),
-                "first_registration": data.get("DatumPrvniRegistrace"),
-                "first_registration_cz": data.get("DatumPrvniRegistraceVCr"),
+                "valid_until": vehicle_data.get("pravidelnaTechnickaProhlidkaDo"),
+                "brand": vehicle_data.get("tovarniZnacka"),
+                "model": vehicle_data.get("obchodniOznaceni"),
+                "vin": vehicle_data.get("vin"),
+                "tp_number": vehicle_data.get("cisloTp"),
+                "orv_number": vehicle_data.get("cisloOrv"),
+                "color": vehicle_data.get("vozidloKaroserieBarva"),
+                "weight": vehicle_data.get("hmotnostiProvozni"),
+                "max_weight": vehicle_data.get("hmotnostiPov"),
+                "engine_power": vehicle_data.get("motorMaxVykon"),
+                "fuel_type": vehicle_data.get("palivo"),
+                "first_registration": vehicle_data.get("datumPrvniRegistrace"),
+                "first_registration_cz": vehicle_data.get("datumPrvniRegistraceVCr"),
+                "max_speed": vehicle_data.get("maximalniRychlost"),
+                "consumption_city": vehicle_data.get("spotrebaMesto"),
+                "consumption_highway": vehicle_data.get("spotrebaMimoMesto"),
+                "consumption_combined": vehicle_data.get("spotrebaKombinovana"),
+                "co2_emissions": vehicle_data.get("emiseCO2"),
             }
             
             # Calculate derived values
@@ -141,6 +162,7 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
                 processed_data["days_remaining"] = None
                 processed_data["status"] = STKStatus.UNKNOWN
             
+            _LOGGER.debug("Processed data: %s", processed_data)
             return processed_data
             
         except Exception as err:

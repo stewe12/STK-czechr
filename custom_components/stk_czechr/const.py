@@ -22,7 +22,7 @@ DEFAULT_UPDATE_INTERVAL = 86400  # 24 hours
 API_TIMEOUT = 30  # seconds
 
 # API endpoints
-API_BASE_URL = "https://dataovozidlech.cz/api"
+API_BASE_URL = "https://api.dataovozidlech.cz/api/vehicletechnicaldata/v2"
 API_REGISTRATION_URL = "https://dataovozidlech.cz/registraceApi"
 API_DOCUMENTATION_URL = "https://dataovozidlech.cz/data/RSV_Verejna_API_DK_v1_0.pdf"
 
