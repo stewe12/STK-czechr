@@ -68,18 +68,31 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
             
             _LOGGER.info("Fetching data via official API for VIN %s", self.vin)
             
-            # TODO: Implement actual API call once documentation is available
-            # For now, return placeholder data
+            # Make API call
             data = await self._call_api()
             
-            # Update last request time
-            self._last_request_time = datetime.now()
+            # Only update last request time if API call was successful
+            if data and "error" not in data:
+                self._last_request_time = datetime.now()
+                _LOGGER.debug("Successfully updated data for VIN %s", self.vin)
+            else:
+                _LOGGER.warning("API call failed for VIN %s, keeping cached data", self.vin)
+                # Return cached data if available, otherwise return error
+                if self.coordinator.data:
+                    return self.coordinator.data
+                else:
+                    return data
             
             return data
             
         except Exception as err:
             _LOGGER.error("Error fetching data for VIN %s: %s", self.vin, err)
-            return {"error": str(err)}
+            # Return cached data if available, otherwise return error
+            if self.coordinator.data:
+                _LOGGER.debug("Returning cached data due to error for VIN %s", self.vin)
+                return self.coordinator.data
+            else:
+                return {"error": str(err)}
 
     async def _call_api(self):
         """Call the official API."""
@@ -136,48 +149,66 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
             else:
                 return {"error": "Invalid API response format"}
             
-            processed_data = {
-                "valid_until": self._format_date(vehicle_data.get("PravidelnaTechnickaProhlidkaDo")),
-                "brand": vehicle_data.get("TovarniZnacka"),
-                "model": vehicle_data.get("ObchodniOznaceni"),
-                "vin": vehicle_data.get("VIN"),
-                "tp_number": vehicle_data.get("CisloTp"),
-                "orv_number": vehicle_data.get("CisloOrv"),
-                "color": vehicle_data.get("VozidloKaroserieBarva"),
-                "weight": vehicle_data.get("HmotnostiProvozni"),
-                "max_weight": vehicle_data.get("HmotnostiPripPov"),
-                "engine_power": vehicle_data.get("MotorMaxVykon"),
-                "fuel_type": vehicle_data.get("Palivo"),
-                "first_registration": self._format_date(vehicle_data.get("DatumPrvniRegistrace")),
-                "first_registration_cz": self._format_date(vehicle_data.get("DatumPrvniRegistraceVCr")),
-                "max_speed": vehicle_data.get("NejvyssiRychlost"),
-                "consumption_city": self._clean_consumption(vehicle_data.get("SpotrebaNa100Km")),
-                "consumption_highway": self._clean_consumption(vehicle_data.get("SpotrebaNa100Km")),
-                "consumption_combined": self._clean_consumption(vehicle_data.get("SpotrebaNa100Km")),
-                "co2_emissions": self._clean_emissions(vehicle_data.get("EmiseCO2")),
-                "vehicle_type": vehicle_data.get("VozidloDruh"),
-                "category": vehicle_data.get("Kategorie"),
-                "engine_displacement": vehicle_data.get("MotorZdvihObjem"),
-                "dimensions": vehicle_data.get("Rozmery"),
-                "wheelbase": vehicle_data.get("RozmeryRozvor"),
-                "noise_stationary": self._clean_noise(vehicle_data.get("HlukStojiciOtacky")),
-                "noise_driving": vehicle_data.get("HlukJizda"),
-                "status_name": vehicle_data.get("StatusNazev"),
-                "owners_count": vehicle_data.get("PocetVlastniku"),
-                "operators_count": vehicle_data.get("PocetProvozovatelu"),
-                "tires_front": self._extract_tire_info(vehicle_data.get("NapravyPneuRafky"), 0),
-                "tires_rear": self._extract_tire_info(vehicle_data.get("NapravyPneuRafky"), 1),
-                "length": self._extract_dimension(vehicle_data.get("Rozmery"), 0),
-                "width": self._extract_dimension(vehicle_data.get("Rozmery"), 1),
-                "height": self._extract_dimension(vehicle_data.get("Rozmery"), 2),
-            }
+            # Process data with better handling of missing values
+            processed_data = {}
+            
+            # Core STK data - always try to get these
+            processed_data["valid_until"] = self._format_date(vehicle_data.get("PravidelnaTechnickaProhlidkaDo"))
+            processed_data["brand"] = vehicle_data.get("TovarniZnacka") or ""
+            processed_data["model"] = vehicle_data.get("ObchodniOznaceni") or ""
+            processed_data["vin"] = vehicle_data.get("VIN") or ""
+            processed_data["color"] = vehicle_data.get("VozidloKaroserieBarva") or ""
+            
+            # Numeric values with proper handling
+            processed_data["weight"] = self._safe_numeric(vehicle_data.get("HmotnostiProvozni"))
+            processed_data["max_weight"] = self._safe_numeric(vehicle_data.get("HmotnostiPripPov"))
+            processed_data["max_speed"] = self._safe_numeric(vehicle_data.get("NejvyssiRychlost"))
+            processed_data["engine_displacement"] = self._safe_numeric(vehicle_data.get("MotorZdvihObjem"))
+            processed_data["wheelbase"] = self._safe_numeric(vehicle_data.get("RozmeryRozvor"))
+            processed_data["noise_driving"] = self._safe_numeric(vehicle_data.get("HlukJizda"))
+            processed_data["owners_count"] = self._safe_numeric(vehicle_data.get("PocetVlastniku"))
+            processed_data["operators_count"] = self._safe_numeric(vehicle_data.get("PocetProvozovatelu"))
+            
+            # Text values with fallback
+            processed_data["tp_number"] = vehicle_data.get("CisloTp") or ""
+            processed_data["orv_number"] = vehicle_data.get("CisloOrv") or ""
+            processed_data["engine_power"] = vehicle_data.get("MotorMaxVykon") or ""
+            processed_data["fuel_type"] = vehicle_data.get("Palivo") or ""
+            processed_data["vehicle_type"] = vehicle_data.get("VozidloDruh") or ""
+            processed_data["category"] = vehicle_data.get("Kategorie") or ""
+            processed_data["status_name"] = vehicle_data.get("StatusNazev") or ""
+            
+            # Dates
+            processed_data["first_registration"] = self._format_date(vehicle_data.get("DatumPrvniRegistrace"))
+            processed_data["first_registration_cz"] = self._format_date(vehicle_data.get("DatumPrvniRegistraceVCr"))
+            
+            # Dimensions
+            processed_data["length"] = self._safe_numeric(self._extract_dimension(vehicle_data.get("Rozmery"), 0))
+            processed_data["width"] = self._safe_numeric(self._extract_dimension(vehicle_data.get("Rozmery"), 1))
+            processed_data["height"] = self._safe_numeric(self._extract_dimension(vehicle_data.get("Rozmery"), 2))
+            
+            # Consumption and emissions
+            processed_data["consumption_city"] = self._safe_numeric(self._clean_consumption(vehicle_data.get("SpotrebaNa100Km")))
+            processed_data["consumption_highway"] = self._safe_numeric(self._clean_consumption(vehicle_data.get("SpotrebaNa100Km")))
+            processed_data["consumption_combined"] = self._safe_numeric(self._clean_consumption(vehicle_data.get("SpotrebaNa100Km")))
+            processed_data["co2_emissions"] = self._safe_numeric(self._clean_emissions(vehicle_data.get("EmiseCO2")))
+            
+            # Noise
+            processed_data["noise_stationary"] = self._safe_numeric(self._clean_noise(vehicle_data.get("HlukStojiciOtacky")))
+            
+            # Tires
+            processed_data["tires_front"] = self._extract_tire_info(vehicle_data.get("NapravyPneuRafky"), 0) or ""
+            processed_data["tires_rear"] = self._extract_tire_info(vehicle_data.get("NapravyPneuRafky"), 1) or ""
+            
+            # Raw data for debugging
+            processed_data["dimensions"] = vehicle_data.get("Rozmery") or ""
             
             # Calculate derived values
             if processed_data.get("valid_until"):
                 processed_data["days_remaining"] = self._calculate_days_remaining(processed_data["valid_until"])
                 processed_data["status"] = self._determine_status(processed_data["valid_until"])
             else:
-                processed_data["days_remaining"] = None
+                processed_data["days_remaining"] = 0
                 processed_data["status"] = STKStatus.UNKNOWN
             
             _LOGGER.debug("Processed data: %s", processed_data)
@@ -318,6 +349,24 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
         
         return None
 
+    def _safe_numeric(self, value):
+        """Safely convert value to numeric, return 0 if conversion fails."""
+        if value is None:
+            return 0
+        
+        try:
+            if isinstance(value, (int, float)):
+                return value
+            if isinstance(value, str):
+                # Try to extract numeric value from string
+                cleaned = value.strip()
+                if cleaned and cleaned != "":
+                    return float(cleaned)
+        except (ValueError, TypeError):
+            pass
+        
+        return 0
+
     async def async_unload(self):
         """Clean up resources."""
         await self._session.close()
@@ -353,14 +402,14 @@ class STKczechrSensor(CoordinatorEntity, SensorEntity):
         """Return the state of the sensor."""
         if not self.coordinator.data:
             _LOGGER.debug("No data available for sensor %s", self._attr_name)
-            return None
+            return self._get_default_value()
             
         if "error" in self.coordinator.data:
             error = self.coordinator.data["error"]
             if error == ERROR_API_KEY_MISSING:
                 return "API key required"
             _LOGGER.warning("Error in data for sensor %s: %s", self._attr_name, error)
-            return None
+            return self._get_default_value()
             
         data = self.coordinator.data
         if self._sensor_type == "status":
@@ -370,14 +419,18 @@ class STKczechrSensor(CoordinatorEntity, SensorEntity):
         
         # Handle None values consistently
         if value is None:
-            # For numeric sensors, return 0 instead of None to avoid state changes
-            if hasattr(self, '_attr_unit_of_measurement') and self._attr_unit_of_measurement:
-                return 0
-            # For text sensors, return empty string instead of None
-            return ""
+            return self._get_default_value()
         
         _LOGGER.debug("Sensor %s value: %s", self._attr_name, value)
         return value
+
+    def _get_default_value(self):
+        """Get default value based on sensor type."""
+        # For numeric sensors, return 0
+        if hasattr(self, '_attr_unit_of_measurement') and self._attr_unit_of_measurement:
+            return 0
+        # For text sensors, return empty string
+        return ""
 
     @property
     def extra_state_attributes(self):
