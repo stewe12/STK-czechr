@@ -11,7 +11,7 @@ Tento Home Assistant addon umožňuje sledování technických kontrol vozidel (
 - Možnost konfigurace více vozidel.
 - Podpora několika jazyků (čeština, angličtina).
 - Integrace s Home Assistant pomocí platformy `sensor`.
-- **NOVÉ v 0.3.0**: Bezpečný web scraping s rate limiting (maximálně jednou za den).
+- **NOVÉ v 0.3.1**: Opravena ikona pro HACS a integrace, vylepšené logging.
 
 ## Instalace
 
@@ -24,9 +24,9 @@ Tento Home Assistant addon umožňuje sledování technických kontrol vozidel (
 
 Po instalaci bude potřeba zadat informace o vozidle. Pro každý záznam budete potřebovat VIN číslo vozidla a pojmenování vozidla. Na základě VIN bude addon automaticky stahovat data o STK.
 
-## Bezpečný přístup (verze 0.3.0)
+## Bezpečný přístup (verze 0.3.1)
 
-**Důležité**: Addon nyní používá pouze web scraping s přísným rate limiting pro bezpečnost:
+**Důležité**: Addon používá pouze web scraping s přísným rate limiting pro bezpečnost:
 
 ### Rate Limiting:
 - **Maximálně jednou za 24 hodin** - addon si pamatuje čas posledního požadavku
@@ -69,6 +69,20 @@ Pokud vidíte zprávu "Rate limited", je to normální chování:
 - Nová data se stáhnou až po 24 hodinách
 - Mezitím se používají poslední dostupná data
 
+### Debugging:
+
+Pro detailnější informace o tom, co se děje:
+1. Povolte debug logging v `configuration.yaml`:
+```yaml
+logger:
+  default: info
+  logs:
+    custom_components.stk_czechr: debug
+```
+
+2. Restartujte Home Assistant
+3. Zkontrolujte logy v Developer Tools > Logs
+
 ## Podporované senzory
 
 ### Základní (povolené ve výchozím nastavení):
@@ -106,6 +120,7 @@ Pro problémy nebo dotazy:
 
 ## Verze
 
+- **0.3.1** - Opravena ikona pro HACS a integrace, vylepšené logging pro debugging
 - **0.3.0** - Přechod na bezpečný web scraping s rate limiting (maximálně jednou za den)
 - **0.2.0** - Přidána podpora web scraping, více API endpointů, lepší error handling
 - **0.1.0** - První verze s základní funkcionalitou
