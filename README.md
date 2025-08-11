@@ -4,7 +4,7 @@
 
 Tento Home Assistant addon umožňuje sledování technických kontrol vozidel (STK) v České republice. K tomu používá veřejně dostupná data o vozidlech z [Data o vozidlech](https://www.dataovozidlech.cz). Umožňuje sledovat platnost STK, zbývající dny do vypršení, a další údaje o vozidlech pomocí VIN.
 
-## ⚠️ DŮLEŽITÉ - Verze 0.4.5
+## ⚠️ DŮLEŽITÉ - Verze 0.4.7
 
 **Web scraping již není podporován** kvůli změnám na dataovozidlech.cz. Addon nyní vyžaduje **oficiální API klíč**.
 
@@ -27,7 +27,7 @@ Tento Home Assistant addon umožňuje sledování technických kontrol vozidel (
 - Možnost konfigurace více vozidel.
 - Podpora několika jazyků (čeština, angličtina).
 - Integrace s Home Assistant pomocí platformy `sensor`.
-- **NOVÉ v 0.4.5**: Opraveno zpracování API dat podle skutečné struktury odpovědi.
+- **NOVÉ v 0.4.7**: Vylepšené formátování dat, optimalizované výchozí senzory, stabilní hodnoty.
 
 ## Instalace
 
@@ -120,13 +120,16 @@ Pro testování API a diagnostiku problémů je k dispozici debug stránka:
 - **Platnost STK** - datum vypršení technické kontroly
 - **Dní do konce platnosti** - počet dní do vypršení
 - **Stav STK** - validní/vypršená/varování
+- **Značka, model, VIN** - identifikace vozidla
+- **Barva, hmotnost** - fyzické vlastnosti
+- **Rozměry** - délka, šířka, výška
+- **Výkon, rychlost, palivo** - technické parametry
 
 ### Další (vypnuté ve výchozím nastavení):
-- Značka, model, VIN
 - Číslo TP, číslo ORV
-- Barva, hmotnost, rozměry
-- Výkon motoru, palivo, spotřeba
 - Datum první registrace
+- Spotřeba, emise
+- Hluk, stav vozidla
 - A mnoho dalších...
 
 ## Technické detaily
@@ -160,6 +163,8 @@ Pro problémy nebo dotazy:
 
 ## Verze
 
+- **0.4.7** - Vylepšené formátování dat, optimalizované výchozí senzory, stabilní hodnoty
+- **0.4.6** - Opraveny senzory a přidány chybějící hodnoty (rozměry, hluk, stav vozidla)
 - **0.4.5** - Opraveno zpracování API dat podle skutečné struktury odpovědi
 - **0.4.4** - Opravena registrace HTTP endpointu pro debug stránku
 - **0.4.3** - Přidána debug stránka pro testování API, optimalizovaný rate limiting (1 call/min)
