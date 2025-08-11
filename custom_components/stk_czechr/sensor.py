@@ -99,18 +99,17 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
                 # Add another delay before form submission
                 await asyncio.sleep(1)
                 
-                # Prepare form data for search
-                form_data = {
+                # Prepare query parameters for GET request
+                params = {
                     'vin': self.vin,
                     'search': 'Vyhledat'
                 }
                 
                 if csrf_token:
-                    form_data['_token'] = csrf_token
+                    params['_token'] = csrf_token
                 
-                # Submit the search form with proper headers
+                # Submit the search form with GET method and proper headers
                 headers = {
-                    'Content-Type': 'application/x-www-form-urlencoded',
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                     'Accept-Language': 'cs-CZ,cs;q=0.9,en;q=0.8',
@@ -121,9 +120,9 @@ class STKczechrDataUpdateCoordinator(DataUpdateCoordinator):
                     'Upgrade-Insecure-Requests': '1',
                 }
                 
-                search_response = await self._session.post(
+                search_response = await self._session.get(
                     WEB_SEARCH_URL,
-                    data=form_data,
+                    params=params,
                     headers=headers
                 )
                 
